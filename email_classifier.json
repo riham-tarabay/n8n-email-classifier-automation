@@ -1,0 +1,210 @@
+{
+  "name": "project2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "d2bb7a98-a5f7-48e5-9064-38c68ae47993",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cEGh4kueN85bGVtq",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Please classify the following email into one of two categories: \"Refund\" or \"Inquiry\". \n- Refund: Customer is asking to cancel an order or requesting a refund.\n- Inquiry: Customer is asking for more information about products, especially beauty or makeup.\n\nProvide the output as a JSON object with the following fields:\n- \"name\": The name of the customer (if available, otherwise just put \"Unknown\").\n- \"subject\": The subject of the email.\n- \"category\": The category of the email, either \"Refund\" or \"Inquiry\".\n- \"summary\": A brief summary of the customer's request or inquiry (max 2-3 sentences).\n\nEmail: \"{{ $json[\"snippet\"] }}\"\n\nOutput format (strictly in JSON):\n{\n  \"name\": \"Customer's Name\",\n  \"subject\": \"Email Subject\",\n  \"category\": \"Refund or Inquiry\",\n  \"summary\": \"Brief summary of the request\"\n}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        -80
+      ],
+      "id": "c0255efb-5489-49e3-bb1d-014b3cd756a4",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Uzx9i9cKgctoXGzj",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"name\": \"{{ JSON.parse($json.output[0].content[0].text).name }}\",\n  \"subject\": \"{{ JSON.parse($json.output[0].content[0].text).subject }}\",\n\"category\" : \"{{ JSON.parse($json.output[0].content[0].text).category }}\",\n\"summary\" : \"{{ JSON.parse($json.output[0].content[0].text).summary }}\",\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        -80
+      ],
+      "id": "ef2ce469-1e11-4c9e-8804-a5947b7d7cc0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QzdFDMGNw37NKqfuHnPz9083Ae2CjLWwh7ltdJfDu64",
+          "mode": "list",
+          "cachedResultName": "email classifier",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QzdFDMGNw37NKqfuHnPz9083Ae2CjLWwh7ltdJfDu64/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QzdFDMGNw37NKqfuHnPz9083Ae2CjLWwh7ltdJfDu64/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $json.name }}",
+            "subject": "={{ $json.subject }}",
+            "category": "={{ $json.category }}",
+            "summary": "={{ $json.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "4019a106-c060-403d-a9ec-2f00e9fa1511",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UnkpGXaX9bYpeArt",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "04cc56ec-c0de-4dc2-b9bf-4e33c744e81c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a87f74991ec788c48130d6ea6aae599bc03ef36dc7bfa4b4352bde9559a09f0b"
+  },
+  "id": "uAf19b5Oy9dGeaM3",
+  "tags": []
+}
